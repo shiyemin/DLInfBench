@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import matplotlib
 matplotlib.use('Agg')
@@ -14,6 +15,9 @@ if __name__ == '__main__':
 
     results = {}
     file_list = glob.glob('%s/*_%s_*.txt' % (args.res_dir, args.network))
+    if len(file_list) == 0:
+        print('No results for %s' % args.network)
+        sys.exit(1)
     for fpath in file_list:
         fname = os.path.split(fpath)[-1]
         dllib, network, batch_size = os.path.splitext(fname)[0].split('_')
@@ -49,19 +53,22 @@ if __name__ == '__main__':
 
     print('Read results: %s' % results)
 
-    for target in ['speed', 'gpu memory']:
+    for target in ['Speed', 'GPU Memory']:
         plt.clf()
         plt.figure(figsize=(12, 8))
-        plt.title('%s benchmark' % target)
-        plt.ylabel('speed(images/s)')
-        plt.xlabel('batch size')
+        plt.title('%s %s Benchmark' % (args.network.capitalize(), target))
+        if target == 'Speed':
+            plt.ylabel('Speed(images/s)')
+        elif target == 'GPU Memory':
+            plt.ylabel('GPU Memory(MB)')
+        plt.xlabel('Batch Size')
         xticks = []
         for dllib in results:
-            plt.plot(results[dllib]['batch_size'], results[dllib][target], label=dllib, marker='x')
+            plt.plot(results[dllib]['batch_size'], results[dllib][target.lower()], label=dllib, marker='x')
             if len(results[dllib]['batch_size']) > len(xticks):
                 xticks = results[dllib]['batch_size']
         plt.legend(loc=2)
         plt.xticks(xticks)
-        res_path = os.path.join(args.res_dir, '%s_%s.png' % (args.network, target.replace(' ', '_')))
-        print('Save %s benchmark results to: %s' % (target, res_path))
+        res_path = os.path.join(args.res_dir, '%s_%s.png' % (args.network, target.lower().replace(' ', '_')))
+        print('Save %s benchmark results to: %s' % (target.lower(), res_path))
         plt.savefig(res_path)
